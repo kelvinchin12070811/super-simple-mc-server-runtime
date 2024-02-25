@@ -1,16 +1,25 @@
 # frozen_string_literal: true
 
 BACKUP_PATH = '/app/minecraft/server-data/backup'
+BACKUP_ENABLED = ENV['ENABLE_BACKUP'] == 'TRUE'
+BACKUP_DURATION = lambda do
+  duration = ENV['BACKUP_DURATION'].to_i
+  duration <= 0 ? 30 : duration
+end.call
 
 last_time = nil
 running = true
 instant_mode = ARGV.include?('-i')
+
+puts BACKUP_DURATION.class
 
 def puts_timestamp(message)
   puts "[Backup daemon][#{Time.now.strftime('%H:%M:%S')}]: #{message}"
 end
 
 def initiate_backup
+  return unless BACKUP_ENABLED == 'TRUE'
+
   filename = Time.now.strftime('%Y%m%dT%H%M%S.7z')
   puts_timestamp("begin to backup to #{filename}")
   system "7z a -t7z -m0=lzma2 -mx=3 \"#{BACKUP_PATH}/#{filename}\" \"/app/minecraft/server-data/world\""

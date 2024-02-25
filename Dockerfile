@@ -12,5 +12,6 @@ COPY ./src ./bin
 
 EXPOSE 25565
 ENV EULA=TRUE
+ENV BACKUP_DURATION=30
 
 CMD ["/usr/bin/supervisord"]
