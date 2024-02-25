@@ -13,8 +13,6 @@ last_time = nil
 running = true
 instant_mode = ARGV.include?('-i')
 
-puts BACKUP_DURATION.class
-
 def puts_timestamp(message)
   puts "[Backup daemon][#{Time.now.strftime('%H:%M:%S')}]: #{message}"
 end

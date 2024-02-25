@@ -4,8 +4,11 @@ SERVER_EXEC_PATH = '/app/minecraft/server-data'
 START_CMD = ENV['START_CMD']
 IS_MODDED = File.exist?("#{SERVER_EXEC_PATH}/startserver.sh")
 
-# Backup on start
-system 'ruby /app/minecraft/bin/backup.rb -i'
+backup_daemon_pid = fork do
+  # Backup on start
+  system 'ruby /app/minecraft/bin/backup.rb -i'
+  system 'ruby /app/minecraft/bin/backup.rb'
+end
 
 child_pid = fork do
   system "chmod 755 #{SERVER_EXEC_PATH}/startserver.sh && #{SERVER_EXEC_PATH}/startserver.sh" if IS_MODDED
@@ -13,6 +16,7 @@ child_pid = fork do
 end
 
 trap('SIGTERM') do
+  Process.kill('INT', backup_daemon_pid)
   Process.kill('INT', child_pid)
 
   # Backup on stop
@@ -20,6 +24,7 @@ trap('SIGTERM') do
 end
 
 trap('SIGINT') do
+  Process.kill('INT', backup_daemon_pid)
   Process.kill('INT', child_pid)
 
   # Backup on stop
