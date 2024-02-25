@@ -5,9 +5,10 @@ services:
     ports:
       - "25565:25565"
     volumes:
-      - "./data:/app/minecraft/server-data"
-      - "./src:/app/minecraft"
+      - "../data:/app/minecraft/server-data"
+      - "../src:/app/minecraft/bin"
     environment:
       EULA: "TRUE"
       TZ: "Asia/Singapore"
+      START_CMD: "java -Xmx4096M -Xms1024M -jar ./minecraft_server.1.20.4.jar nogui"
     restart: always
