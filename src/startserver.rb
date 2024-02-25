@@ -1,34 +1,31 @@
 # frozen_string_literal: true
 
+require 'fileutils'
+
 SERVER_EXEC_PATH = '/app/minecraft/server-data'
 START_CMD = ENV['START_CMD']
 IS_MODDED = File.exist?("#{SERVER_EXEC_PATH}/startserver.sh")
 
-backup_daemon_pid = fork do
-  # Backup on start
+child_pid = fork do
   system 'ruby /app/minecraft/bin/backup.rb -i'
-  system 'ruby /app/minecraft/bin/backup.rb'
+  exec "chmod 755 #{SERVER_EXEC_PATH}/startserver.sh && #{SERVER_EXEC_PATH}/startserver.sh" if IS_MODDED
+  exec START_CMD unless IS_MODDED
 end
 
-child_pid = fork do
-  system "chmod 755 #{SERVER_EXEC_PATH}/startserver.sh && #{SERVER_EXEC_PATH}/startserver.sh" if IS_MODDED
-  system START_CMD unless IS_MODDED
-end
+File.new('/app/minecraft/server-data/server.pid', 'w').write(child_pid.to_s)
 
 trap('SIGTERM') do
-  Process.kill('INT', backup_daemon_pid)
-  Process.kill('INT', child_pid)
-
+  FileUtils.rm('/app/minecraft/server-data/server.pid')
   # Backup on stop
   exec 'ruby /app/minecraft/bin/backup.rb -i'
+  Process.kill('INT', child_pid)
 end
 
 trap('SIGINT') do
-  Process.kill('INT', backup_daemon_pid)
-  Process.kill('INT', child_pid)
-
+  FileUtils.rm('/app/minecraft/server-data/server.pid')
   # Backup on stop
   exec 'ruby /app/minecraft/bin/backup.rb -i'
+  Process.kill('INT', child_pid)
 end
 
 Process.wait(child_pid)
